@@ -1,0 +1,21 @@
+{
+  "name": "first-mate",
+  "version": "0.1.0",
+  "description": "Voice dispatcher: work with Claude Code agents by radio procedure",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "setup:speech": "scripts/setup-speech.sh",
+    "setup:voice": "scripts/setup-voice.sh",
+    "build:apk": "android/build.sh",
+    "pair": "node scripts/pair.mjs",
+    "peer": "node scripts/peer.mjs",
+    "service:install": "scripts/install-service.sh",
+    "service:remove": "scripts/install-service.sh --remove"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

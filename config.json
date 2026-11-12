@@ -1,0 +1,19 @@
+{
+  "pack": "pirate",
+  "host": "",
+  "allow": "tailscale",
+  "port": 7373,
+  "token": "",
+  "projectRoots": [
+    "~/Projects"
+  ],
+  "projects": [],
+  "spokenNames": {},
+  "routerModel": "haiku",
+  "agentModel": "claude-opus-5-5",
+  "agentEffort": "high",
+  "sttModel": "small.en",
+  "permissionMode": "acceptEdits",
+  "allowedTools": [],
+  "autoAdvance": false
+}

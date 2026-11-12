@@ -1,0 +1,9 @@
+node_modules/
+data/
+stt/.venv/
+android/build/
+android/*.keystore
+tts/.venv/
+tts/voices/
+auditions/
+__pycache__/

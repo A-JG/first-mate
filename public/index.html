@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>First Mate</title>
+<style>
+  /* Fonts are served by the dispatcher itself (public/fonts, Open Font License). */
+  @font-face { font-family: 'Pirata One'; src: url(/fonts/PirataOne-Regular.ttf) format('truetype'); font-display: swap; }
+  @font-face { font-family: 'IM Fell English SC'; src: url(/fonts/IMFeENsc28P.ttf) format('truetype'); font-display: swap; }
+  @font-face { font-family: 'Alegreya Sans'; font-weight: 400; src: url(/fonts/AlegreyaSans-Regular.ttf) format('truetype'); font-display: swap; }
+  @font-face { font-family: 'Alegreya Sans'; font-weight: 500; src: url(/fonts/AlegreyaSans-Medium.ttf) format('truetype'); font-display: swap; }
+  @font-face { font-family: 'Alegreya Sans'; font-weight: 700; src: url(/fonts/AlegreyaSans-Bold.ttf) format('truetype'); font-display: swap; }
+  @font-face { font-family: 'Alegreya Sans'; font-style: italic; src: url(/fonts/AlegreyaSans-Italic.ttf) format('truetype'); font-display: swap; }
+  /* Night at sea (dark) and a sea chart (light). Brass for what you can say,
+     sea green for what is live, crimson for stopping. */
+  :root {
+    color-scheme: light dark;
+    --bg: #efe4c9; --bg2: #e6d7b4; --panel: #fbf4e2; --panel2: #f4e9cf; --ink: #2a1f14; --muted: #6e5d45; --faint: #b3a284;
+    --line: #d9c7a0; --brass: #8a5f12; --brass-hi: #b07d1e; --brass-ink: #fff8e6; --sea: #23625c; --sea-soft: #d7e6df;
+    --me: #e3ecdf; --code-bg: #ece0c3; --warn: #a2571b; --live: #a8322a; --live-soft: #f5dcd5;
+    --pirate: 'Pirata One', 'IM Fell English SC', Georgia, serif;
+    --display: 'IM Fell English SC', 'Iowan Old Style', Georgia, serif;
+    --body: 'Alegreya Sans', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1620; --bg2: #102030; --panel: #142331; --panel2: #192b3b; --ink: #efe4cc; --muted: #a8b3b8; --faint: #5b6b74;
+      --line: #27394a; --brass: #d8b065; --brass-hi: #f0cd84; --brass-ink: #1a1408; --sea: #6cc3b0; --sea-soft: #173a3a;
+      --me: #183634; --code-bg: #0f1c27; --warn: #e7b26a; --live: #ef7b68; --live-soft: #3a1e1c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1620; --bg2: #102030; --panel: #142331; --panel2: #192b3b; --ink: #efe4cc; --muted: #a8b3b8; --faint: #5b6b74;
+    --line: #27394a; --brass: #d8b065; --brass-hi: #f0cd84; --brass-ink: #1a1408; --sea: #6cc3b0; --sea-soft: #173a3a;
+    --me: #183634; --code-bg: #0f1c27; --warn: #e7b26a; --live: #ef7b68; --live-soft: #3a1e1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font: 17px/1.5 var(--body);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--brass) 10%, transparent), transparent 60%),
+      radial-gradient(900px 700px at -10% 110%, color-mix(in srgb, var(--sea) 12%, transparent), transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--line) 35%, transparent) 47px 48px),
+      repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--line) 35%, transparent) 47px 48px),
+      var(--bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 18px 16px 48px; display: grid; gap: 16px;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; padding-top: 10px; } }
+  [hidden] { display: none !important; }
+
+  /* ---- masthead ---- */
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: relative; padding-bottom: 14px; }
+  header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; opacity: .55;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='10' viewBox='0 0 40 10'%3E%3Cpath d='M0 5 Q10 0 20 5 T40 5' fill='none' stroke='%23b08a45' stroke-width='1.5'/%3E%3C/svg%3E") repeat-x; }
+  .mark { width: 40px; height: 40px; flex: none; color: var(--brass); animation: sway 9s ease-in-out infinite; }
+  @keyframes sway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+  h1 { font: 38px/1 var(--pirate); margin: 0 6px 0 0; letter-spacing: .01em; color: var(--brass-hi); text-shadow: 0 2px 0 color-mix(in srgb, var(--bg) 60%, black); }
+  h1 small { display: block; font: italic 13px/1.3 var(--body); color: var(--muted); letter-spacing: 0; margin-top: 3px; }
+  h2 { font: 25px/1.1 var(--pirate); color: var(--brass); margin: 0 0 10px; letter-spacing: .02em; font-weight: 400; }
+  .chip { font-size: 13px; padding: 3px 11px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); white-space: nowrap; }
+  .chip.on { border-color: var(--sea); color: var(--sea); }
+  .chip.live { border-color: var(--live); color: var(--live); background: var(--live-soft); }
+  .spacer { flex: 1; }
+
+  section { background: linear-gradient(180deg, var(--panel), var(--panel2)); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--brass) 18%, transparent) inset, 0 10px 30px -18px rgba(0, 0, 0, .55); }
+  button, select { font: 500 15px var(--body); padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); cursor: pointer; transition: transform .08s, background-color .15s, border-color .15s; }
+  button:hover { border-color: var(--brass); }
+  button:active { transform: translateY(1px); }
+  button.primary, button[aria-pressed="true"] { background: var(--sea); color: var(--bg); border-color: var(--sea); }
+  button.stop { background: var(--live); border-color: var(--live); color: #fff8f0; font: 23px/1 var(--pirate); letter-spacing: .04em; padding: 8px 18px;
+    box-shadow: 0 6px 18px -8px var(--live); }
+  button:focus-visible, input:focus-visible, select:focus-visible, .term:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+
+  /* In the phone app: one compact row that stays put, the interrupt button always top right. */
+  .native header { flex-wrap: nowrap; gap: 8px; position: sticky; top: 0; z-index: 2; padding: 8px 0 14px; margin-top: -8px;
+    background: linear-gradient(var(--bg) 85%, transparent); }
+  .native h1 small { display: none; }
+  .native h1 { font-size: 30px; white-space: nowrap; }
+  /* Only worth a glance when the link is down. */
+  .native header #conn.on { display: none; }
+  .native .mark { width: 30px; height: 30px; }
+  .native header .chip { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+  .native header #mode { display: none; }
+  .native header .spacer { flex: 1 1 0; min-width: 0; }
+  .native header button { flex: none; }
+  /* Hands-free on the phone: no typing box. */
+  .native #f { display: none; }
+
+  /* ---- ship's log (the karaoke transcript) ---- */
+  #log { height: 52vh; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px 4px 2px 0; }
+  .native #log { height: 58vh; }
+  .line { padding: 9px 13px; border-radius: 12px; max-width: 92%; position: relative; }
+  .me { align-self: flex-end; background: var(--me); border: 1px solid color-mix(in srgb, var(--sea) 30%, transparent); border-bottom-right-radius: 4px; }
+  .me::before { content: 'Captain'; display: block; font: 12px/1.2 var(--display); color: var(--sea); letter-spacing: .06em; margin-bottom: 2px; }
+  .me.ignored { opacity: .6; background: transparent; border-style: dashed; }
+  .me .why { display: block; font-size: 13px; color: var(--muted); font-style: italic; }
+  .net { align-self: flex-start; background: color-mix(in srgb, var(--panel2) 70%, var(--bg)); border: 1px solid var(--line);
+    border-left: 3px solid color-mix(in srgb, var(--brass) 45%, transparent); border-bottom-left-radius: 4px; }
+  .net::before { content: 'First Mate'; display: block; font: 12px/1.2 var(--display); color: var(--brass); letter-spacing: .06em; margin-bottom: 2px; }
+  /* Words wait faint, light up as they are spoken, then stay readable. */
+  .net .w { color: var(--faint); transition: color .12s, background-color .12s; border-radius: 5px; padding: 0 2px; }
+  .net .w.spoken, .net.done .w { color: var(--ink); }
+  .net .w.now { color: var(--brass-ink); background: var(--brass-hi); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brass-hi) 35%, transparent); }
+  .net.active { border-left-color: var(--brass-hi); font-size: 22px; line-height: 1.5; max-width: 100%;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brass) 30%, transparent), 0 12px 30px -16px color-mix(in srgb, var(--brass) 60%, transparent); }
+  .net.cut { border-left-color: var(--live); }
+  .net.cut::after { content: 'cut off'; position: absolute; right: 10px; top: 8px; font: 12px var(--display); color: var(--live); letter-spacing: .05em; }
+  @media (prefers-reduced-motion: reduce) { .net .w { transition: none; } .mark { animation: none; } }
+  /* Words you can say, technical names, and the crew. */
+  .term { border-bottom: 2px dotted var(--brass); cursor: pointer; border-radius: 3px; }
+  .net .term .w.spoken, .net.done .term .w, .me .term .w { color: var(--brass); font-weight: 700; }
+  .net .term .w.now { color: var(--brass-ink); }
+  .term:hover { background: color-mix(in srgb, var(--brass) 15%, transparent); }
+  code { font: 0.86em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); color: var(--sea);
+    padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); }
+  .w.now code { background: transparent; color: inherit; border-color: transparent; }
+  .w.cs { font-weight: 700; font-variant: small-caps; letter-spacing: .03em; }
+
+  .status { margin-top: 10px; min-height: 1.5em; font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
+  #composing { color: var(--warn); font-style: italic; }
+  #hearing { color: var(--live); font-weight: 700; }
+  #hearing:not(:empty)::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--live);
+    margin-right: 6px; animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  form { display: flex; gap: 8px; margin-top: 8px; }
+  input[type=text] { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: inherit; }
+  .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .quick button { font-size: 14px; padding: 5px 11px; color: var(--brass); border-color: color-mix(in srgb, var(--brass) 40%, var(--line)); background: transparent; }
+  .quick button:hover { background: color-mix(in srgb, var(--brass) 12%, transparent); }
+  .legend { margin-top: 12px; font-size: 13px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .legend .term { cursor: default; color: var(--brass); font-weight: 700; }
+  .legend b { font-variant: small-caps; letter-spacing: .03em; color: var(--ink); }
+
+  /* ---- side panels ---- */
+  .side { display: grid; gap: 16px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  li { border-top: 1px dashed var(--line); padding-top: 10px; }
+  li:first-child { border-top: 0; padding-top: 0; }
+  .name { font-weight: 700; font-variant: small-caps; letter-spacing: .03em; }
+  .name .flag { font-variant: normal; font-weight: 500; font-size: 12px; padding: 1px 8px; border-radius: 99px; margin-left: 6px;
+    border: 1px solid var(--line); color: var(--muted); letter-spacing: 0; }
+  .name .flag.air { border-color: var(--brass); color: var(--brass); }
+  .name .flag.ask { border-color: var(--live); color: var(--live); }
+  .sub, .empty { color: var(--muted); font-size: 14px; }
+  .empty { font-style: italic; }
+  .crew-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); margin-right: 7px; vertical-align: 1px; }
+  .crew-dot.working { background: var(--sea); animation: pulse 1.4s ease-in-out infinite; }
+
+  .fold { padding: 0; }
+  .fold > button.head { width: 100%; display: flex; align-items: baseline; gap: 10px; border: 0; background: none;
+    padding: 14px 16px; text-align: left; border-radius: 14px; }
+  .fold > button.head b { font: 25px/1.1 var(--pirate); color: var(--brass); letter-spacing: .02em; font-weight: 400; }
+  .fold > button.head .hint { color: var(--muted); font-size: 14px; flex: 1; }
+  .fold > button.head .chev { color: var(--brass); transition: transform .15s; }
+  .fold > button.head[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+  .fold .body { margin: 0; padding: 0 16px 14px; }
+  #guideBody { display: grid; max-height: 48vh; overflow-y: auto; }
+  .g { padding: 9px 6px; border-top: 1px dashed var(--line); border-radius: 8px; }
+  .g dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+  .g dt .t { color: var(--brass); font: 22px/1.1 var(--pirate); letter-spacing: .02em; }
+  .g dt .alias { color: var(--muted); font-size: 13px; }
+  .g dd { margin: 2px 0 0; font-size: 15px; }
+  .g dd .ex { display: block; color: var(--muted); font-style: italic; margin-top: 2px; }
+  .g.flash { background: color-mix(in srgb, var(--brass) 18%, transparent); }
+  .setting { display: grid; gap: 6px; padding: 10px 0; border-top: 1px dashed var(--line); }
+  .setting:first-child { border-top: 0; }
+  .setting label { font-size: 14px; color: var(--muted); }
+  .setting .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  select { max-width: 100%; }
+
+  /* ---- the ship: the crew at work ---- */
+  .ship { padding: 12px 12px 14px; grid-column: 1 / -1; }
+  @media (min-width: 761px) { .ship { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 14px; align-items: center; } .ship h2 { grid-column: 1 / -1; } #card { margin-top: 0; } }
+  .native #log { height: 42vh; }
+  .ship h2 { margin: 2px 4px 8px; }
+  #scene { width: 100%; height: auto; display: block; border-radius: 10px; background: var(--sky);
+    touch-action: manipulation; }
+  /* The 3D ship (public/ship3d.js). The flat one above is kept for screens without WebGL. */
+  #ship3d { width: 100%; aspect-ratio: 16 / 10; border-radius: 10px; background: linear-gradient(var(--sky), var(--sky2)); }
+  @media (max-width: 760px) { #ship3d { aspect-ratio: 5 / 4; } }
+  :root { --sky: #cfe3ea; --sky2: #e9efe0; --sea: #3f7f8f; --sea2: #2c6474; --wood: #7a5230; --wood2: #5c3d22;
+    --sail: #f4ecd6; --rope: #8a6a44; --skin: #e9c49a; --star: transparent; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #0e2233; --sky2: #16324a; --sea: #13405a; --sea2: #0d2f44;
+    --wood: #6a4628; --wood2: #4a3019; --sail: #d9ceb2; --rope: #7a5e3c; --star: #f3e6c4; } }
+  :root[data-theme="dark"] { --sky: #0e2233; --sky2: #16324a; --sea: #13405a; --sea2: #0d2f44;
+    --wood: #6a4628; --wood2: #4a3019; --sail: #d9ceb2; --rope: #7a5e3c; --star: #f3e6c4; }
+  .bob { animation: bob 6s ease-in-out infinite; transform-origin: 240px 200px; transform-box: view-box; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-0.8deg); } 50% { transform: translateY(3px) rotate(0.8deg); } }
+  .waves { animation: drift 7s linear infinite; }
+  .waves.back { animation-duration: 11s; animation-direction: reverse; opacity: .7; }
+  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-80px); } }
+  .flag { animation: flap 1.6s ease-in-out infinite; transform-origin: 200px 22px; transform-box: view-box; }
+  @keyframes flap { 50% { transform: skewY(-6deg) scaleX(.93); } }
+  .pirate { transition: transform 1.9s ease-in-out; cursor: pointer; }
+  .pirate .legs line { stroke: var(--wood2); stroke-width: 2.6; stroke-linecap: round; }
+  .pirate.walking .leg1 { animation: stride .32s ease-in-out infinite alternate; transform-origin: 0 -10px; transform-box: view-box; }
+  .pirate.walking .leg2 { animation: stride .32s ease-in-out infinite alternate-reverse; transform-origin: 0 -10px; transform-box: view-box; }
+  .pirate.walking .fig { animation: hop .32s ease-in-out infinite alternate; }
+  @keyframes stride { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
+  @keyframes hop { to { transform: translateY(-1.6px); } }
+  .pirate.busy .fig { animation: work 1.1s ease-in-out infinite; }
+  @keyframes work { 50% { transform: translateY(-2px) rotate(-3deg); } }
+  .pirate.knocking .arm { animation: knock .5s ease-in-out infinite; transform-origin: 4px -20px; transform-box: view-box; }
+  @keyframes knock { 50% { transform: rotate(-35deg); } }
+  .pirate.off { opacity: .55; }
+  .pirate .name { font: 700 8.5px var(--body); fill: var(--ink); paint-order: stroke; stroke: var(--sky); stroke-width: 3px; text-anchor: middle; }
+  .pirate .bubble rect { fill: var(--panel); stroke: var(--line); }
+  .pirate .bubble text { font: 8px var(--body); fill: var(--ink); text-anchor: middle; }
+  .pirate.sel .name { fill: var(--brass-hi); }
+  .pirate.alert .bubble rect { stroke: var(--live); }
+  .zzz { font: italic 8px var(--body); fill: var(--muted); animation: zzz 2.4s ease-in-out infinite; }
+  @keyframes zzz { 0% { opacity: 0; transform: translate(0, 0); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -10px); } }
+  @media (prefers-reduced-motion: reduce) { .bob, .waves, .flag, .pirate, .pirate * , .zzz { animation: none !important; transition: none !important; } }
+  #card { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-height: 3em; }
+  #card .who { font: 21px/1.1 var(--pirate); color: var(--brass); }
+  #card .ttl { color: var(--muted); font-style: italic; font-size: 14px; }
+  #card .doing { margin-top: 6px; font-size: 15px; }
+  #card .doing b { color: var(--sea); }
+  #card .hint { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+      <circle cx="32" cy="32" r="16"/><circle cx="32" cy="32" r="5" fill="currentColor"/>
+      <path d="M32 4v12M32 48v12M4 32h12M48 32h12M12.2 12.2l8.5 8.5M43.3 43.3l8.5 8.5M12.2 51.8l8.5-8.5M43.3 20.7l8.5-8.5"/>
+      <g fill="currentColor" stroke="none"><circle cx="32" cy="4" r="3"/><circle cx="32" cy="60" r="3"/><circle cx="4" cy="32" r="3"/><circle cx="60" cy="32" r="3"/>
+      <circle cx="12.2" cy="12.2" r="3"/><circle cx="51.8" cy="51.8" r="3"/><circle cx="12.2" cy="51.8" r="3"/><circle cx="51.8" cy="12.2" r="3"/></g>
+    </svg>
+    <h1>First Mate<small>yer crew of Claude agents, at the captain's word</small></h1>
+    <span id="conn" class="chip">offline</span>
+    <span id="mode" class="chip">listening</span>
+    <span class="spacer"></span>
+    <button id="stopTalk" class="stop" type="button" title="Interrupt the First Mate">Avast</button>
+    <button id="mic" type="button" aria-pressed="true" hidden>Mic on</button>
+    <button id="sound" type="button" aria-pressed="false">Sound off</button>
+  </header>
+
+  <section class="ship">
+      <h2>The ship</h2>
+      <div id="ship3d" role="group" aria-label="The crew at work on the ship"></div>
+      <svg id="scene" viewBox="0 0 480 270" role="img" aria-label="The crew at work on the ship" hidden>
+        <defs>
+          <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky)"/><stop offset="1" stop-color="var(--sky2)"/></linearGradient>
+          <pattern id="planks" width="24" height="7" patternUnits="userSpaceOnUse"><rect width="24" height="7" fill="var(--wood)"/><path d="M0 6.5H24M12 0V7" stroke="var(--wood2)" stroke-width="1"/></pattern>
+        </defs>
+        <rect width="480" height="270" fill="url(#skyg)"/>
+        <g fill="var(--star)"><circle cx="40" cy="26" r="1"/><circle cx="96" cy="58" r=".8"/><circle cx="430" cy="30" r="1.1"/><circle cx="380" cy="70" r=".7"/><circle cx="270" cy="16" r=".8"/><circle cx="150" cy="22" r=".7"/></g>
+        <circle cx="420" cy="44" r="14" fill="var(--sail)" opacity=".85"/>
+        <g class="waves back"><path d="M0 222 q20 -7 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 V270 H0Z" fill="var(--sea2)"/></g>
+        <g class="bob">
+          <!-- masts, yards and sails -->
+          <path d="M200 178V30M330 178V52" stroke="var(--wood2)" stroke-width="5"/>
+          <path d="M168 62H232M300 80H360" stroke="var(--wood2)" stroke-width="3"/>
+          <path d="M170 66 Q200 84 230 66 V118 Q200 132 170 118Z" fill="var(--sail)" stroke="var(--rope)"/>
+          <path d="M172 124 Q200 138 228 124 V160 Q200 170 172 160Z" fill="var(--sail)" stroke="var(--rope)"/>
+          <path d="M302 84 Q330 100 358 84 V140 Q330 152 302 140Z" fill="var(--sail)" stroke="var(--rope)"/>
+          <path d="M200 30 L200 14" stroke="var(--wood2)" stroke-width="2"/>
+          <g class="flag"><path d="M201 14 H226 L222 22 L226 30 H201Z" fill="#1b1b1b"/><circle cx="212" cy="20.5" r="3" fill="#eee"/><path d="M207 26 L217 30 M217 26 L207 30" stroke="#eee" stroke-width="1.3"/></g>
+          <!-- rigging: rope ladders up both masts -->
+          <path d="M150 150 L196 66 M156 152 L198 70 M250 178 L204 66 M360 178 L334 86 M368 178 L336 90" stroke="var(--rope)" stroke-width=".8"/>
+          <path d="M340 110 H366 M343 124 H368 M346 138 H371 M349 152 H373" stroke="var(--rope)" stroke-width=".8"/>
+          <!-- crow's nest (back) -->
+          <rect x="185" y="50" width="30" height="4" fill="var(--wood2)"/>
+          <!-- stern cabin and quarterdeck -->
+          <path d="M34 150 H150 V178 H40Z" fill="url(#planks)"/>
+          <rect x="34" y="146" width="120" height="5" fill="var(--wood2)"/>
+          <rect x="116" y="156" width="20" height="22" rx="2" fill="var(--wood2)" stroke="var(--brass)" stroke-width="1"/><circle cx="131" cy="168" r="1.3" fill="var(--brass)"/>
+          <rect x="52" y="157" width="12" height="9" fill="#f0cd84" opacity=".8"/><rect x="74" y="157" width="12" height="9" fill="#f0cd84" opacity=".8"/>
+          <!-- helm and chart table on the quarterdeck -->
+          <g stroke="var(--wood2)" stroke-width="1.6" fill="none"><circle cx="70" cy="132" r="9"/><path d="M70 120V144M58 132H82M61.5 123.5L78.5 140.5M61.5 140.5L78.5 123.5"/><path d="M70 141V150"/></g>
+          <rect x="114" y="138" width="22" height="3" fill="var(--wood2)"/><path d="M117 141V150M133 141V150" stroke="var(--wood2)" stroke-width="2"/><rect x="117" y="134.5" width="16" height="4" fill="var(--sail)" transform="rotate(-6 125 136)"/>
+          <!-- hull -->
+          <path d="M30 178 H452 L446 186 Q430 232 384 240 H112 Q58 232 36 186Z" fill="url(#planks)" stroke="var(--wood2)" stroke-width="1.5"/>
+          <path d="M34 182 H448" stroke="var(--brass)" stroke-width="1.2" opacity=".7"/>
+          <g fill="var(--wood2)"><circle cx="230" cy="202" r="5"/><circle cx="270" cy="202" r="5"/><circle cx="310" cy="202" r="5"/></g>
+          <g stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"><path d="M230 202h-9M270 202h-9M310 202h-9"/></g>
+          <!-- deck gear: cannon, workbench, galley pot -->
+          <rect x="242" y="170" width="20" height="6" rx="3" fill="#2b2b2b"/><circle cx="246" cy="176" r="2.5" fill="var(--wood2)"/><circle cx="258" cy="176" r="2.5" fill="var(--wood2)"/>
+          <rect x="374" y="166" width="26" height="3" fill="var(--wood2)"/><path d="M377 169V178M397 169V178" stroke="var(--wood2)" stroke-width="2"/>
+          <path d="M418 168 h16 l-2 10 h-12z" fill="#3a3a3a"/><path d="M422 164 q2 -4 0 -8 M428 164 q2 -4 0 -8" stroke="var(--muted)" stroke-width="1" fill="none" opacity=".7"/>
+          <g id="crew"></g>
+          <!-- crow's nest (front, hides the lookout's legs) -->
+          <path d="M184 44 H216 L213 56 H187Z" fill="var(--wood)" stroke="var(--wood2)"/>
+        </g>
+        <g class="waves"><path d="M0 238 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 V270 H0Z" fill="var(--sea)"/></g>
+      </svg>
+      <div id="card"><span class="hint">Tap a pirate to see what they are up to.</span></div>
+    </section>
+  <section>
+    <h2>Ship's log</h2>
+    <div id="log" aria-live="polite"></div>
+    <div class="status"><span id="hearing"></span><span id="composing"></span></div>
+    <form id="f">
+      <input id="t" type="text" autocomplete="off" aria-label="Type instead of speaking" placeholder="Type what you would say">
+      <button class="primary">Say</button>
+    </form>
+    <div class="quick" id="quick"></div>
+    <div class="legend">
+      <span><span class="term">words ye can say</span> tap one for its meaning</span>
+      <span><code>technical name</code></span>
+      <span><b>Crew name</b> one agent thread</span>
+    </div>
+  </section>
+
+  <div class="side">
+    <section class="fold" id="phone" hidden>
+      <button class="head" type="button" aria-expanded="false" aria-controls="phoneBody" data-fold="phone">
+        <b>Rigging</b><span class="hint" id="phoneHint">radio settings</span><span class="chev" aria-hidden="true">▾</span>
+      </button>
+      <div class="body" id="phoneBody" hidden>
+        <div class="setting">
+          <label for="voice">Voice</label>
+          <div class="row"><select id="voice"></select></div>
+        </div>
+        <div class="setting">
+          <label><input type="checkbox" id="headsetMic"> Use the earbud microphone when earbuds are connected</label>
+        </div>
+        <div class="setting">
+          <div class="row">
+            <button id="radioToggle" type="button">Stop radio</button>
+            <button id="unpair" type="button">Unpair</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="fold" id="guide">
+      <button class="head" type="button" aria-expanded="true" aria-controls="guideBody" data-fold="guide">
+        <b>Ship's articles</b><span class="hint">every word and what it does</span><span class="chev" aria-hidden="true">▾</span>
+      </button>
+      <dl class="body" id="guideBody"></dl>
+    </section>
+    <section>
+      <h2>Awaiting the captain</h2>
+      <ul id="queue"></ul>
+    </section>
+    <section>
+      <h2>Crew roster</h2>
+      <ul id="threads"></ul>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const params = new URLSearchParams(location.search);
+const token = params.get('t');
+// Inside the phone app the app itself speaks and listens; this page only shows.
+const bridge = params.has('native') && window.FirstMateNative ? window.FirstMateNative : null;
+if (bridge) document.body.classList.add('native');
+const log = $('log');
+let pack = { commands: {}, terminators: [], newProject: [], newThread: [], callsigns: [], guide: [], voice: {} };
+let phrases = [];        // [{ words: ['walk','the','plank'], key: 'no' }], longest first
+let callsigns = new Set();
+let interruptWord = 'avast';
+
+// ---------- text -> words, with command words and technical names marked ----------
+const norm = (s) => s.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+function tokenize(rich) {
+  const toks = [];
+  String(rich).split('`').forEach((seg, i) => {
+    const code = i % 2 === 1;
+    for (const w of seg.split(/\s+/).filter(Boolean)) {
+      // Punctuation left behind by a backtick belongs to the word before it.
+      if (!code && toks.length && !/[\p{L}\p{N}]/u.test(w)) toks[toks.length - 1].tail += w;
+      else toks.push({ text: w, code, tail: '' });
+    }
+  });
+  let group = 0;
+  for (let i = 0; i < toks.length; i++) {
+    if (toks[i].code || toks[i].term) continue;
+    const hit = phrases.find((p) => p.words.every((w, j) => toks[i + j] && !toks[i + j].code && norm(toks[i + j].text) === w));
+    if (hit) { group += 1; hit.words.forEach((_, j) => { toks[i + j].term = hit.key; toks[i + j].group = group; }); }
+    else if (callsigns.has(norm(toks[i].text))) toks[i].cs = true;
+  }
+  let at = 0;
+  for (const t of toks) { t.at = at; at += t.text.length + t.tail.length + 1; }
+  return toks;
+}
+
+function renderLine(cls, rich, note) {
+  const line = { el: el('div', 'line ' + cls), toks: tokenize(rich), state: 'pending', born: Date.now() };
+  line.plain = line.toks.map((t) => t.text + t.tail).join(' ');
+  let box = null;
+  for (const t of line.toks) {
+    t.el = el('span', 'w' + (t.cs ? ' cs' : ''));
+    t.el.append(t.code ? el('code', '', t.text) : t.text, t.tail);
+    if (t.term) {
+      if (!box || box.dataset.group !== String(t.group)) {
+        if (line.el.childNodes.length) line.el.append(' ');
+        box = el('span', 'term');
+        box.dataset.group = t.group; box.dataset.key = t.term;
+        box.tabIndex = 0; box.setAttribute('role', 'button');
+        box.title = 'What does this mean?';
+        line.el.append(box);
+      } else box.append(' ');
+      box.append(t.el);
+    } else {
+      box = null;
+      if (line.el.childNodes.length) line.el.append(' ');
+      line.el.append(t.el);
+    }
+  }
+  if (note) line.el.append(el('span', 'why', note));
+  log.append(line.el);
+  log.scrollTop = log.scrollHeight;
+  return line;
+}
+
+// Keep an element in view inside the transcript box without moving the page.
+function reveal(node) {
+  const box = log.getBoundingClientRect();
+  const r = node.getBoundingClientRect();
+  if (r.bottom > box.bottom) log.scrollTop += r.bottom - box.bottom + 8;
+  else if (r.top < box.top) log.scrollTop -= box.top - r.top + 8;
+}
+
+function mark(line, i) {
+  line.toks.forEach((t, j) => {
+    t.el.classList.toggle('spoken', j < i);
+    t.el.classList.toggle('now', j === i);
+  });
+  if (line.toks[i]) reveal(line.toks[i].el);
+}
+function wordAt(line, charIndex) {
+  let i = 0;
+  while (i + 1 < line.toks.length && line.toks[i + 1].at <= charIndex) i += 1;
+  return i;
+}
+function activate(line) {
+  line.state = 'active';
+  line.el.classList.add('active');
+  reveal(line.el);
+}
+function finish(line, cut) {
+  if (!line || line.state === 'done') return;
+  line.state = 'done';
+  line.toks.forEach((t) => { t.el.classList.remove('now'); t.el.classList.add('spoken'); });
+  line.el.classList.remove('active');
+  line.el.classList.add('done');
+  if (cut) line.el.classList.add('cut');
+}
+
+// ---------- lines by id; who speaks them ----------
+const byId = new Map();   // say id -> line
+const queue = [];         // lines waiting to be spoken here (desk mode)
+let busy = false;
+const synth = window.speechSynthesis;
+let voice = null;
+let current = null;       // the line this page is speaking (desk mode)
+const soundOn = () => $('sound').getAttribute('aria-pressed') === 'true';
+let radioInfo = { running: false };
+const nativeSpeaking = () => bridge && radioInfo.running;
+
+function pickVoice() {
+  const all = synth?.getVoices?.() ?? [];
+  const want = pack.voice?.lang;
+  voice = all.find((v) => want && v.lang === want) ?? all.find((v) => v.lang?.startsWith('en')) ?? null;
+}
+if (synth) synth.onvoiceschanged = pickVoice;
+
+function rateFor(line, dense) {
+  const base = pack.voice?.rate ?? 1;
+  return dense ? (pack.voice?.denseRate ?? base * 0.9) : base;
+}
+// Estimated time on one word, used when no speech engine reports word positions.
+function duration(tok, rate) {
+  const base = 350 / rate;
+  const size = Math.min(1.9, Math.max(0.55, tok.text.length / 5));
+  const end = tok.tail + tok.text.slice(-1);
+  const pause = /[.?!:]/.test(end) ? 320 : /[,;]/.test(end) ? 140 : 0;
+  return base * size + pause;
+}
+// Tell the dispatcher how far this page has spoken, so an interrupt knows where.
+function report(line, state, at = 0) {
+  if (!soundOn() || !line.id) return;
+  send({ type: 'playback', id: line.id, state, at });
+}
+
+function play(line) {
+  return new Promise((resolve) => {
+    if (line.state === 'done') { resolve(); return; }
+    current = line;
+    activate(line);
+    const rate = rateFor(line, line.dense);
+    let timer, watchdog, started = false;
+    const done = (state = 'done') => {
+      if (line.state === 'done' && line.resolved) return;
+      clearTimeout(timer); clearTimeout(watchdog);
+      if (line.state !== 'done') report(line, state);
+      finish(line);
+      line.resolved = true;
+      if (current === line) current = null;
+      resolve();
+    };
+    line.abort = () => done('stopped');
+    const paced = (i, atEnd) => {
+      if (line.state === 'done') return;
+      if (i >= line.toks.length) { atEnd?.(); return; }
+      mark(line, i);
+      timer = setTimeout(() => paced(i + 1, atEnd), duration(line.toks[i], rate));
+    };
+    if (!soundOn() || !synth) { paced(0, () => done()); return; }   // silent: same pace, no audio
+
+    const u = new SpeechSynthesisUtterance(line.plain);
+    if (voice) u.voice = voice;
+    u.pitch = pack.voice?.pitch ?? 1;
+    u.rate = rate;
+    let exact = false;
+    u.onstart = () => { started = true; clearTimeout(watchdog); report(line, 'start'); if (!exact) paced(0, null); };
+    u.onboundary = (e) => {
+      if (e.name && e.name !== 'word') return;
+      exact = true;
+      clearTimeout(timer);
+      mark(line, wordAt(line, e.charIndex));
+      report(line, 'range', e.charIndex);
+    };
+    u.onend = () => done();
+    u.onerror = () => done();
+    synth.speak(u);
+    watchdog = setTimeout(() => {      // no speech engine answered: keep moving at reading pace
+      if (started || line.state === 'done') return;
+      u.onend = u.onerror = null;
+      try { synth.cancel(); } catch {}
+      paced(0, () => done());
+    }, 1500);
+  });
+}
+
+async function pump() {
+  if (busy) return;
+  busy = true;
+  while (queue.length) await play(queue.shift());
+  busy = false;
+}
+
+function onSay(m) {
+  const line = renderLine('net', m.rich ?? m.text);
+  line.id = m.id;
+  line.dense = m.dense;
+  byId.set(m.id, line);
+  if (nativeSpeaking()) return;   // the app speaks it and drives the highlight
+  queue.push(line);
+  pump();
+}
+
+// Everything still waiting or playing is cut short.
+function stopAll() {
+  try { synth?.cancel(); } catch {}
+  queue.splice(0).forEach((l) => finish(l));
+  current?.abort?.();
+  for (const l of byId.values()) if (l.state !== 'done') finish(l, l.state === 'active');
+}
+
+// ---------- the phone app's speech, word by word ----------
+window.mateSpeech = (state, id, start) => {
+  const line = byId.get(id);
+  if (!line) return;
+  if (state === 'start' || state === 'range') {
+    for (const [k, l] of byId) if (k < id && l.state !== 'done') finish(l);
+    if (line.state !== 'active') activate(line);
+    mark(line, state === 'start' ? 0 : wordAt(line, start));
+  } else {
+    finish(line, state === 'stopped');
+  }
+};
+// Back from the background: everything up to `lastDone` has been spoken.
+window.mateSync = (lastDone) => { for (const [k, l] of byId) if (k <= lastDone) finish(l); };
+window.mateRadio = (info) => { radioInfo = info; renderRadio(); };
+// Lines the app never reported on (it was off, or the screen was) stay readable.
+setInterval(() => {
+  if (!bridge) return;
+  for (const l of byId.values()) if (l.state === 'pending' && Date.now() - l.born > 25000) finish(l);
+}, 3000);
+
+// ---------- tones (desk only; the app plays its own) ----------
+let ac;
+const TONES = { traffic: [660, 880], sent: [880], working: [440], cancel: [330, 262], stop: [520, 390] };
+function tone(name) {
+  if (!soundOn() || bridge) return;
+  try {
+    ac ??= new AudioContext();
+    (TONES[name] ?? [520]).forEach((hz, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = hz;
+      const t = ac.currentTime + i * 0.14;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.07, t + 0.02); g.gain.linearRampToValueAtTime(0, t + 0.12);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.13);
+    });
+  } catch {}
+}
+
+$('sound').addEventListener('click', () => {
+  const on = !soundOn();
+  $('sound').setAttribute('aria-pressed', String(on));
+  $('sound').textContent = on ? 'Sound on' : 'Sound off';
+  store.set('firstmate.sound', on ? '1' : '0');
+  send({ type: 'speaker', on });
+  if (on) { pickVoice(); try { synth?.resume(); } catch {} } else { try { synth?.cancel(); } catch {} }
+});
+$('stopTalk').addEventListener('click', () => {
+  if (bridge) bridge.interrupt(); else heard(interruptWord);
+});
+
+// ---------- phone controls ----------
+function renderRadio() {
+  if (!bridge) return;
+  const i = radioInfo;
+  $('mic').hidden = !i.running;
+  $('mic').setAttribute('aria-pressed', String(Boolean(i.mic)));
+  $('mic').textContent = i.mic ? 'Mic on' : 'Mic off';
+  $('radioToggle').textContent = i.running ? 'Stop radio' : 'Start radio';
+  $('headsetMic').checked = i.headsetMic !== false;
+  $('phoneHint').textContent = i.running ? `${i.status ?? ''}${i.headset ? ' · ' + i.headset : ''}` : 'radio is off';
+  if (i.voice) $('voice').value = i.voice;
+}
+function loadVoices() {
+  let list = [];
+  try { list = JSON.parse(bridge.voices()); } catch {}
+  const sel = $('voice');
+  sel.replaceChildren();
+  list.sort((a, b) => (a.locale === 'en-GB' ? -1 : 0) - (b.locale === 'en-GB' ? -1 : 0) || a.name.localeCompare(b.name));
+  for (const v of list) {
+    const o = el('option', '', `${v.name} (${v.locale}${v.network ? ', needs signal' : ''})`);
+    o.value = v.name;
+    sel.append(o);
+  }
+  if (radioInfo.voice) sel.value = radioInfo.voice;
+}
+if (bridge) {
+  $('sound').hidden = true;
+  $('phone').hidden = false;
+  try { radioInfo = JSON.parse(bridge.info()); } catch {}
+  renderRadio();
+  setTimeout(loadVoices, 1200);
+  $('mic').addEventListener('click', () => bridge.setMic(!radioInfo.mic));
+  $('voice').addEventListener('change', (e) => bridge.setVoice(e.target.value));
+  $('headsetMic').addEventListener('change', (e) => bridge.setHeadsetMic(e.target.checked));
+  $('radioToggle').addEventListener('click', () => (radioInfo.running ? bridge.stopRadio() : bridge.startRadio()));
+  $('unpair').addEventListener('click', () => { if (confirm('Unpair this phone? You will need a new code from the computer.')) bridge.unpair(); });
+  setInterval(() => { try { radioInfo = JSON.parse(bridge.info()); renderRadio(); } catch {} }, 4000);
+}
+
+// ---------- folds ----------
+function setFold(name, open) {
+  const head = document.querySelector(`[data-fold="${name}"]`);
+  head.setAttribute('aria-expanded', String(open));
+  $(head.getAttribute('aria-controls')).hidden = !open;
+  store.set('firstmate.fold.' + name, open ? '1' : '0');
+  if (name === 'phone' && open && bridge) loadVoices();
+}
+for (const head of document.querySelectorAll('[data-fold]')) {
+  const name = head.dataset.fold;
+  head.addEventListener('click', () => setFold(name, head.getAttribute('aria-expanded') !== 'true'));
+  setFold(name, store.get('firstmate.fold.' + name, name === 'guide' ? '1' : '0') === '1');
+}
+
+function renderGuide() {
+  const body = $('guideBody');
+  body.replaceChildren();
+  for (const g of pack.guide) {
+    const row = el('div', 'g'); row.dataset.key = g.key;
+    const dt = el('dt');
+    dt.append(el('span', 't', g.term));
+    if (g.aliases?.length) dt.append(el('span', 'alias', 'also: ' + g.aliases.join(', ')));
+    const dd = el('dd', '', g.meaning);
+    if (g.example) dd.append(el('span', 'ex', '“' + g.example + '”'));
+    row.append(dt, dd);
+    body.append(row);
+  }
+}
+function showTerm(key) {
+  setFold('guide', true);
+  const row = [...document.querySelectorAll('.g')].find((r) => r.dataset.key === key);
+  if (!row) return;
+  row.scrollIntoView({ block: 'nearest' });
+  row.classList.add('flash');
+  setTimeout(() => row.classList.remove('flash'), 1600);
+}
+log.addEventListener('click', (e) => { const t = e.target.closest('.term'); if (t) showTerm(t.dataset.key); });
+log.addEventListener('keydown', (e) => {
+  const t = e.target.closest?.('.term');
+  if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); showTerm(t.dataset.key); }
+});
+
+// ---------- state panels ----------
+// ---------- the ship ----------
+// Where each kind of work happens on deck (feet position in the scene).
+const STATIONS = {
+  helm: [80, 150], charts: [125, 150], door: [140, 178], nest: [200, 50], rigging: [356, 132],
+  cannons: [236, 178], bench: [387, 178], galley: [440, 178], squall: [436, 172],
+};
+const LOUNGE = [[172, 178], [214, 178], [290, 178], [316, 178], [344, 178], [410, 178], [100, 150], [276, 178]];
+const STATION_OF = {
+  Read: 'charts', Grep: 'charts', Glob: 'charts', LS: 'charts', NotebookRead: 'charts',
+  Edit: 'bench', Write: 'bench', MultiEdit: 'bench', NotebookEdit: 'bench',
+  Bash: 'cannons', BashOutput: 'cannons', KillShell: 'cannons',
+  WebFetch: 'nest', WebSearch: 'nest',
+  Task: 'rigging', Agent: 'rigging', TodoWrite: 'rigging',
+};
+const PIRATE_DOING = {
+  helm: 'at the helm', charts: 'poring over charts', bench: 'hammering away', cannons: 'firing cannons!',
+  nest: 'scanning the horizon', rigging: 'rallying hands', door: 'news for ye!', squall: 'in a squall!',
+};
+const PLAIN_DOING = {
+  Read: 'Reading', Grep: 'Searching for', Glob: 'Looking for files', LS: 'Looking through', Edit: 'Editing', Write: 'Writing',
+  MultiEdit: 'Editing', NotebookEdit: 'Editing', Bash: 'Running', BashOutput: 'Checking a command', WebFetch: 'Fetching',
+  WebSearch: 'Searching the web for', Task: 'Directing a helper:', Agent: 'Directing a helper:', TodoWrite: 'Updating the plan',
+  thinking: 'Thinking it through',
+};
+const SVGNS = 'http://www.w3.org/2000/svg';
+const sv = (tag, attrs = {}, parent) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); parent?.append(e); return e; };
+const figures = new Map(); // name -> { g, bubble, pos, ... }
+let selected = null;
+let lastShip = null;
+
+function drawPirate(m) {
+  const g = sv('g', { class: 'pirate', tabindex: 0, role: 'button', 'aria-label': m.name });
+  const fig = sv('g', { class: 'fig' }, g);
+  const legs = sv('g', { class: 'legs' }, fig);
+  sv('line', { class: 'leg1', x1: -2, y1: -10, x2: -3, y2: 0 }, legs);
+  sv('line', { class: 'leg2', x1: 2, y1: -10, x2: 3, y2: 0 }, legs);
+  sv('rect', { x: -5.5, y: -24, width: 11, height: 15, rx: 3.5, fill: m.color }, fig);
+  sv('path', { d: 'M-5.5 -13 H5.5', stroke: '#2b2b2b', 'stroke-width': 1.6 }, fig); // belt
+  const arm = sv('path', { class: 'arm', d: 'M4.5 -21 L9 -14', stroke: m.color, 'stroke-width': 2.6, 'stroke-linecap': 'round' }, fig);
+  sv('circle', { cx: 0, cy: -29.5, r: 5.6, fill: 'var(--skin)' }, fig);
+  const dark = '#2a1f14';
+  switch (m.look) {
+    case 'skull': sv('path', { d: 'M-6 -31 Q0 -38 6 -31 Z', fill: '#f2efe6' }, fig); sv('circle', { cx: 0, cy: -33, r: 1.2, fill: '#333' }, fig); sv('path', { d: 'M6 -32 l4 2', stroke: '#f2efe6', 'stroke-width': 1.5 }, fig); break;
+    case 'bandana': sv('path', { d: 'M-6 -31 Q0 -38 6 -31 Z', fill: '#c8392b' }, fig); sv('path', { d: 'M6 -32 l4 3 M6 -32 l3 4', stroke: '#c8392b', 'stroke-width': 1.4 }, fig); break;
+    case 'eyepatch': sv('path', { d: 'M-9 -33 Q0 -41 9 -33 Q0 -36 -9 -33Z', fill: dark }, fig); sv('path', { d: 'M-5.6 -31 L5 -27', stroke: dark, 'stroke-width': 1 }, fig); sv('circle', { cx: 2, cy: -29.5, r: 1.8, fill: dark }, fig); break;
+    case 'beard': sv('path', { d: 'M-5 -28 Q0 -18 5 -28 Z', fill: '#efefef' }, fig); sv('rect', { x: -6, y: -36.5, width: 12, height: 4, rx: 2, fill: '#3c5a7a' }, fig); break;
+    case 'hammer': sv('path', { d: 'M-6 -32 Q0 -38 6 -32 Z', fill: '#6b8f4e' }, fig); sv('path', { d: 'M9 -14 L12 -22', stroke: '#7a5230', 'stroke-width': 1.6 }, fig); sv('rect', { x: 9.5, y: -24.5, width: 6, height: 3, fill: '#888' }, fig); break;
+    case 'feather': sv('path', { d: 'M-9 -33 Q0 -41 9 -33 Q0 -36 -9 -33Z', fill: dark }, fig); sv('path', { d: 'M4 -37 q6 -8 10 -6 q-4 1 -9 7', fill: '#b49ad8' }, fig); break;
+    case 'spyglass': sv('path', { d: 'M-6 -32 Q0 -38 6 -32 Z', fill: '#2f5f8a' }, fig); sv('path', { d: 'M8 -26 L17 -29', stroke: '#c9a24b', 'stroke-width': 2.4, 'stroke-linecap': 'round' }, fig); break;
+    case 'chef': sv('rect', { x: -4.5, y: -42, width: 9, height: 8, rx: 3, fill: '#fafafa' }, fig); sv('rect', { x: -5.5, y: -35, width: 11, height: 2.5, fill: '#fafafa' }, fig); break;
+    default: sv('path', { d: 'M-8 -33 Q0 -40 8 -33Z', fill: dark }, fig);
+  }
+  sv('text', { class: 'name', x: 0, y: 11 }, g).textContent = m.name;
+  const bubble = sv('g', { class: 'bubble', transform: 'translate(0 -50)' }, g);
+  const br = sv('rect', { x: -30, y: -9, width: 60, height: 13, rx: 6 }, bubble);
+  const bt = sv('text', { x: 0, y: 0.5 }, bubble);
+  const z = sv('text', { class: 'zzz', x: 6, y: -36 }, g);
+  z.textContent = 'z z';
+  g.addEventListener('click', () => { selected = m.name; renderShip(lastShip); });
+  g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selected = m.name; renderShip(lastShip); } });
+  $('crew').append(g);
+  return { g, bubble, br, bt, z, arm, pos: null };
+}
+
+function placeOf(t) {
+  if (!t) return null;
+  if (t.squall) return 'squall';
+  if (t.waiting || t.asking) return 'door';
+  if (t.status === 'running') return STATION_OF[t.activity?.tool] ?? 'helm';
+  return null; // idle on an open thread: lounging, awaiting orders
+}
+
+// What a pirate's speech bubble says.
+const sayOf = (t, place) => (!t ? '' : place === 'door' ? (t.asking ? 'asks leave!' : 'news for ye!') : place ? PIRATE_DOING[place] : 'awaiting orders');
+
+function renderShip(s) {
+  if (!s) return;
+  lastShip = s;
+  const crew = s.crew?.length ? s.crew : s.threads.map((t) => ({ name: t.callsign, title: t.callsign, color: '#c9a24b', look: '' }));
+  const byName = new Map(s.threads.map((t) => [t.callsign, t]));
+  if (ship3d) ship3d.update({ ...s, crew }, selected);
+  else if (!$('scene').hidden) renderFlatShip(crew, byName);
+  renderCard(crew, byName);
+}
+
+// The flat ship, for screens that cannot draw the 3D one.
+function renderFlatShip(crew, byName) {
+  const count = {};
+  let lounge = 0;
+  for (const m of crew) {
+    let f = figures.get(m.name);
+    if (!f) { f = drawPirate(m); figures.set(m.name, f); }
+    const t = byName.get(m.name);
+    const place = placeOf(t);
+    let x; let y;
+    if (place) {
+      const n = (count[place] = (count[place] ?? 0) + 1) - 1;
+      [x, y] = STATIONS[place];
+      x += n * 15 * (place === 'door' ? -1 : 1);
+    } else {
+      [x, y] = LOUNGE[lounge++ % LOUNGE.length];
+    }
+    const key = `${x},${y}`;
+    if (f.pos !== key) {
+      if (f.pos) { f.g.classList.add('walking'); clearTimeout(f.walk); f.walk = setTimeout(() => f.g.classList.remove('walking'), 1900); }
+      f.g.style.transform = `translate(${x}px, ${y}px)`;
+      f.pos = key;
+    }
+    const busy = t?.status === 'running';
+    f.g.classList.toggle('busy', busy && place !== 'door');
+    f.g.classList.toggle('knocking', place === 'door');
+    f.g.classList.toggle('off', !t);
+    f.g.classList.toggle('alert', Boolean(t?.asking || t?.squall));
+    f.g.classList.toggle('sel', selected === m.name);
+    f.z.style.display = t ? 'none' : '';
+    const say = sayOf(t, place);
+    f.bubble.style.display = say ? '' : 'none';
+    if (say) { f.bt.textContent = say; const w = Math.max(44, say.length * 4.4 + 12); f.br.setAttribute('x', -w / 2); f.br.setAttribute('width', w); }
+  }
+}
+
+function renderCard(crew, byName) {
+  const card = $('card');
+  const m = crew.find((c) => c.name === selected);
+  if (!m) return;
+  const t = byName.get(m.name);
+  card.replaceChildren();
+  card.append(el('div', 'who', m.name), el('div', 'ttl', m.title ?? ''));
+  if (m.personality) card.append(el('div', 'hint', m.personality));
+  const doing = el('div', 'doing');
+  if (!t) doing.textContent = 'Off duty, napping on deck. Gets the next job that fits their trade.';
+  else {
+    const what = t.asking ? 'Waiting for yer leave to go on.' : t.waiting ? 'Has a report waiting for ye. Say parley.' : t.squall ? 'Hit trouble. The report says what.'
+      : t.status === 'running' ? `${PLAIN_DOING[t.activity?.tool] ?? (t.activity?.tool ?? 'Working')} ${t.activity?.detail ?? ''}`.trim() : 'Done for now; awaiting orders.';
+    const mins = t.since && t.status === 'running' ? Math.max(0, Math.round((Date.now() - t.since) / 60000)) : null;
+    doing.append(el('b', '', `${t.title} · ${t.project.replace(/-/g, ' ')}`), document.createElement('br'), what + (mins != null ? `  (${mins} min so far)` : ''));
+  }
+  card.append(doing);
+}
+
+// The 3D ship loads on its own; until it has, and if it cannot, the page does without it.
+let ship3d = null;
+import('/ship3d.js').then((m) => {
+  ship3d = m.mountShip($('ship3d'), { onSelect: (name) => { selected = name; renderShip(lastShip); }, placeOf, sayOf });
+  renderShip(lastShip);
+}).catch((e) => {
+  console.warn('No 3D ship here, showing the flat one.', e);
+  $('ship3d').hidden = true;
+  $('scene').hidden = false;
+  renderShip(lastShip);
+});
+
+const MODES = { idle: 'listening', confirming: 'awaiting yer word', briefing: 'reading a report' };
+function render(s) {
+  renderShip(s);
+  $('mode').textContent = (s.interrupted ? `cut in on ${s.interrupted}` : MODES[s.mode] ?? s.mode) + (s.held ? ' · anchored' : '');
+  $('mode').classList.toggle('live', Boolean(s.interrupted));
+  $('composing').textContent = s.composing ? 'Taking it down: ' + s.composing + ' …' : '';
+  const q = $('queue'); q.replaceChildren();
+  if (!s.queue.length) q.append(el('li', 'empty', 'Calm seas. Naught awaits ye.'));
+  s.queue.forEach((i, n) => {
+    const li = el('li');
+    const name = el('div', 'name', (n + 1) + '. ' + (i.callsign ?? '?'));
+    if (i.id === s.current) name.append(el('span', 'flag air', 'on the air'));
+    if (i.kind === 'approval') name.append(el('span', 'flag ask', 'asks leave'));
+    if (i.kind === 'error') name.append(el('span', 'flag ask', 'squall'));
+    li.append(name, el('div', 'sub', i.headline.replace(/`/g, '')));
+    q.append(li);
+  });
+  const t = $('threads'); t.replaceChildren();
+  if (!s.threads.length) t.append(el('li', 'empty', 'No crew at sea. Say set sail to send one.'));
+  s.threads.forEach((th) => {
+    const li = el('li');
+    const name = el('div', 'name');
+    name.append(el('span', 'crew-dot' + (th.status === 'running' ? ' working' : '')), th.callsign + ' · ' + th.project.replace(/-/g, ' '));
+    const status = th.status === 'running' ? 'at the oars' + (th.lastTool ? ' (' + th.lastTool + ')' : '') : 'waiting for orders';
+    li.append(name, el('div', 'sub', th.title + ' — ' + status));
+    t.append(li);
+  });
+}
+
+let lastMe = null;
+function onHeard(m) {
+  // Pieces of one transmission (said with pauses) read as one bubble.
+  if (m.join && lastMe && !m.ignored && lastMe.el.isConnected && lastMe.el === log.lastElementChild) {
+    lastMe.text = `${lastMe.text} ${m.text}`;
+    const fresh = renderLine('me', lastMe.text);
+    fresh.toks.forEach((t) => t.el.classList.add('spoken'));
+    lastMe.el.replaceWith(fresh.el);
+    lastMe = { el: fresh.el, text: lastMe.text };
+    return;
+  }
+  if (m.ignored) {
+    renderLine('me ignored', m.text, `Not heard over the First Mate. Say ${interruptWord} first.`);
+  } else {
+    const line = renderLine('me', m.text);
+    line.toks.forEach((t) => t.el.classList.add('spoken'));
+    lastMe = { el: line.el, text: m.text };
+  }
+}
+
+function onHistory(events) {
+  log.replaceChildren();
+  byId.clear();
+  queue.splice(0);
+  for (const e of events) {
+    if (e.type === 'heard') onHeard(e);
+    else if (e.type === 'say') { const l = renderLine('net', e.rich ?? e.text); l.id = e.id; finish(l); byId.set(e.id, l); }
+  }
+}
+
+// ---------- connection ----------
+let ws;
+let welcomed = false;
+function send(obj) { if (ws?.readyState === 1) ws.send(JSON.stringify(obj)); }
+function connect() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/radio');
+  ws.onopen = () => {
+    send({ type: 'hello', token, role: 'desk', reconnect: welcomed || Boolean(bridge) });
+    $('conn').textContent = 'aboard'; $('conn').classList.add('on');
+    if (soundOn() && !bridge) send({ type: 'speaker', on: true });
+  };
+  ws.onclose = (e) => {
+    $('conn').classList.remove('on');
+    $('conn').textContent = e.code === 4401 ? 'key refused' : 'offline';
+    setTimeout(connect, 1500);
+  };
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'welcome') { welcomed = true; interruptWord = m.interrupt ?? interruptWord; $('stopTalk').textContent = interruptWord.charAt(0).toUpperCase() + interruptWord.slice(1); }
+    else if (m.type === 'history') onHistory(m.events);
+    else if (m.type === 'say') onSay(m);
+    else if (m.type === 'heard') onHeard(m);
+    else if (m.type === 'stop') stopAll();
+    else if (m.type === 'pause') { if (!bridge) try { synth?.pause(); } catch {} }
+    else if (m.type === 'resume') { if (!bridge) try { synth?.resume(); } catch {} }
+    else if (m.type === 'tone') tone(m.name);
+    else if (m.type === 'vad') $('hearing').textContent = m.on ? '● hearing you' : '';
+    else if (m.type === 'state') render(m.state);
+  };
+}
+function heard(text) {
+  text = text.trim();
+  if (!text) return;
+  send({ type: 'heard', text });
+}
+$('f').addEventListener('submit', (e) => { e.preventDefault(); heard($('t').value); $('t').value = ''; });
+
+fetch('/pack.json' + (token ? '?t=' + encodeURIComponent(token) : '')).then((r) => r.json()).then((p) => {
+  pack = p;
+  interruptWord = p.commands.interrupt?.[0] ?? interruptWord;
+  const lists = { ...p.commands, end: p.terminators, newProject: p.newProject, newThread: p.newThread };
+  phrases = Object.entries(lists)
+    .flatMap(([key, list]) => list.map((ph) => ({ key, words: ph.split(' ') })))
+    .sort((a, b) => b.words.length - a.words.length);
+  callsigns = new Set(p.callsigns.map((c) => c.toLowerCase()));
+  renderGuide();
+  $('t').placeholder = 'In recipe box, fix the header spacing, ' + p.terminators[0];
+  for (const g of p.guide.filter((x) => x.key !== 'callsign')) {
+    const b = el('button', '', g.term);
+    b.type = 'button';
+    b.title = g.meaning;
+    b.onclick = () => { heard(g.term); $('t').focus(); };
+    $('quick').append(b);
+  }
+  pickVoice();
+  if (!bridge && store.get('firstmate.sound', '0') === '1') $('sound').click();
+  connect();
+}).catch(() => { $('conn').textContent = 'key refused'; });
+</script>
+</body>
+</html>

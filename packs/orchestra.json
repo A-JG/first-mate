@@ -1,0 +1,38 @@
+{
+  "_about": "The language pack. You are the conductor, each agent thread is an instrument, and the commands are stage directions: words whose everyday meaning is the action, but which almost never occur in a software instruction. The first phrase in each list is the one the dispatcher itself says when it prompts you; the rest are aliases. Phrases are matched after lowercasing and stripping punctuation. Only a terminator ends a transmission. A command only counts when it is the whole utterance (a trailing courtesy word is allowed: 'bravo, over').",
+  "terminators": ["over and out"],
+  "courtesy": ["over"],
+  "commands": {
+    "yes": ["bravo", "affirmative"],
+    "no": ["veto", "negative", "scratch that"],
+    "next": ["segue"],
+    "more": ["crescendo"],
+    "repeat": ["encore", "say again"],
+    "skip": ["backstage"],
+    "out": ["finale"],
+    "sitrep": ["roll call", "sitrep"],
+    "standby": ["intermission"],
+    "radiocheck": ["sound check"],
+    "interrupt": ["tacet"],
+    "resume": ["da capo"]
+  },
+  "newTraffic": [],
+  "newProject": ["overture"],
+  "newThread": ["debut"],
+  "callsigns": ["Cello", "Viola", "Oboe", "Harp", "Flute", "Piccolo", "Clarinet", "Bassoon", "Trumpet", "Trombone", "Tuba", "Bugle", "Fiddle", "Banjo", "Mandolin", "Sitar", "Marimba", "Timpani", "Bongo", "Saxophone", "Harmonica", "Ukulele", "Xylophone", "Tambourine", "Bagpipe", "Kazoo"],
+  "mishearings": {
+    "segway": "segue",
+    "seg way": "segue",
+    "on core": "encore",
+    "an core": "encore",
+    "back stage": "backstage",
+    "role call": "roll call",
+    "rollcall": "roll call",
+    "soundcheck": "sound check",
+    "finali": "finale",
+    "vito": "veto",
+    "chello": "cello",
+    "over an out": "over and out",
+    "over in out": "over and out"
+  }
+}
